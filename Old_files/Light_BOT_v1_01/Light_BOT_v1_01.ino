@@ -1,0 +1,139 @@
+/*
+This is my first attempt to create a light controled robot
+It is guided by 3 photoresistors coupled to a left and right motor
+
+The aim of this project is to control the robots response to light using
+two differential with variables changed by photoreisisor inputs.
+
+Created By: Maurice Lamb
+12/5/2012
+ 
+ */
+
+// These constants won't change:
+const int sensorPinC = A0;    // Center Sensor
+const int sensorPinL = A1;    // Left Sensor
+const int sensorPinR = A2;    // Right Sensor
+const int MotorPinL = 9;      // pin that the Left motor is attached to
+const int MotorPinR = 3;      // pin that the Right motor is attached to
+
+// variables:
+// Sensor values for Center
+int sensorValueC = 0;         
+int sensorMinC = 1023;        
+int sensorMaxC = 0;           
+
+// Sensor values for Left
+int sensorValueL = 0;         
+int sensorMinL = 1023;        
+int sensorMaxL = 0;   
+
+// Sensor values for Right
+int sensorValueR = 0;         
+int sensorMinR = 1023;        
+int sensorMaxR = 0;   
+
+// Motor values
+int MotorValueL;
+int MotorValueR;
+
+void setup() {
+  // turn on LED to signal the start of the calibration period:
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
+  
+  pinMode(sensorPinC, INPUT);
+  pinMode(sensorPinL, INPUT);
+  pinMode(sensorPinR, INPUT);
+  
+  pinMode(MotorPinL, OUTPUT);
+  pinMode(MotorPinR, OUTPUT);
+
+
+  // calibrate during the first five seconds 
+  while (millis() < 5000) {
+    //Calibrate Center sensor
+    sensorValueC = analogRead(sensorPinC);
+    // record the maximum sensor value
+    if (sensorValueC > sensorMaxC) {
+      sensorMaxC = sensorValueC;
+    }
+    // record the minimum sensor value
+    if (sensorValueC < sensorMinC) {
+      sensorMinC = sensorValueC;
+    }
+   
+    //Calibrate Left sensor
+    sensorValueL = analogRead(sensorPinL);
+    // record the maximum sensor value
+    if (sensorValueL > sensorMaxL) {
+      sensorMaxL = sensorValueL;
+    }
+    // record the minimum sensor value
+    if (sensorValueL < sensorMinL) {
+      sensorMinL = sensorValueL;
+    }
+   
+    //Calibrate Right sensor
+    sensorValueR = analogRead(sensorPinR);
+    // record the maximum sensor value
+    if (sensorValueR > sensorMaxR) {
+      sensorMaxR = sensorValueR;
+    }
+    // record the minimum sensor value
+    if (sensorValueR < sensorMinR) {
+      sensorMinR = sensorValueR;
+    }
+  }
+
+  // signal the end of the calibration period
+  digitalWrite(13, LOW);
+  MotorValueL = 0;
+  MotorValueR = 0;
+}
+
+void loop() {
+  // read the sensors:
+  sensorValueC = analogRead(sensorPinC);
+  sensorValueL = analogRead(sensorPinL);
+  sensorValueR = analogRead(sensorPinR);
+  
+
+  // apply the calibration to the Center sensor reading
+  sensorValueC = map(sensorValueC, sensorMinC, sensorMaxC, 0, 255);
+  // in case the sensor value is outside the range seen during calibration
+  sensorValueC = constrain(sensorValueC, 0, 255);
+  
+  // apply the calibration to the Left sensor reading
+  sensorValueL = map(sensorValueL, sensorMinL, sensorMaxL, 0, 255);
+  // in case the sensor value is outside the range seen during calibration
+  sensorValueL = constrain(sensorValueL, 0, 255);
+  
+   // apply the calibration to the Right sensor reading
+  sensorValueR = map(sensorValueR, sensorMinR, sensorMaxR, 0, 255);
+  // in case the sensor value is outside the range seen during calibration
+  sensorValueR = constrain(sensorValueR, 0, 255);
+  
+  // Kinex Motors start at 50-60
+  // Calculate Left Motor speed
+  MotorValueL = (sensorValueC - MotorValueL) + (sensorValueL - sensorValueR) - sqrt(MotorValueR); //Consider adding MotorValueR/2 to constant at end)
+  MotorValueL = abs(MotorValueL);
+  MotorValueL = constrain(MotorValueL, 0, 255); 
+  analogWrite(MotorPinL, MotorValueL);
+  
+  //Serial.print(MotorValueL);
+  //Serial.print("\t");
+  
+  delay(50); 
+  
+  // Calculate Right Motor speed
+  MotorValueR = (sensorValueC - MotorValueR) + (sensorValueR - sensorValueL) - sqrt(MotorValueR);
+  MotorValueR = abs(MotorValueR);
+  MotorValueR = constrain(MotorValueR, 0, 255);  
+  analogWrite(MotorPinR, MotorValueR);
+  
+  //Serial.print(MotorValueR);
+  //Serial.println("\t");
+  
+  delay(50);
+}
